@@ -12,7 +12,8 @@ form.onsubmit = function (e) {
 
 function conceptionConnection () {
 	var bday = new Date(Date.parse(form.date.value)),
-		cday = calcConceptionDate(bday, Number(form.premature.value));
+		cday = calcConceptionDate(
+			bday, Number(form.premature.value), Number(form.term.value));
 
 	console.log(cday);
 	announce('You were conceived at approx. ' + cday.toDateString());
@@ -23,10 +24,10 @@ function conceptionConnection () {
 	});
 }
 
-function calcConceptionDate (bday, prematureDays) {
+function calcConceptionDate (bday, offset, dir) {
 	var ret = new Date(bday.getTime());
 	ret.setDate(ret.getDate() - 280); //40(weeks) * 7(days/week) = 280(days)
-	ret.setDate(ret.getDate() + prematureDays)
+	ret.setDate(ret.getDate() + dir * offset)
 
 	return ret;
 }
@@ -140,7 +141,6 @@ function getActualResult (resp) {
 function doRequest (year, cb) {
 	//see the wikipedia API page: https://www.mediawiki.org/wiki/API
 	var url = 'http://en.wikipedia.org/w/api.php?format=json&callback=API_REQUEST_DONE&action=query&prop=extracts&indexpageids&titles=' + encodeURIComponent(year);
-
 
 	var script = document.createElement('script');
 	script.src = url;

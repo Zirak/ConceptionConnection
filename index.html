@@ -12,9 +12,15 @@
 			Date of birth
 			<input type='date' name='date' placeholder='mm/dd/yyyy' required />
 		</label>
+
 		<label>
-			Were you born prematurely?
+			I was born
 			<input type='number' name='premature' value=0 /> days
+
+			<select name='term'>
+				<option value=-1>early</option>
+				<option value=1>late</option>
+			</select>
 		</label>
 
 		<input type='submit' name='submit' />
