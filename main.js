@@ -34,56 +34,78 @@ function calcConceptionDate (bday, prematureDays) {
 function filterResults (resp, date) {
 	var html = getActualResult(resp);
 
-	var months = [
-		'january', 'february', 'march', 'april',
-		'may', 'june', 'july', 'august',
-		'september', 'october', 'november', 'december'
-	];
-
-	//TODO: for the initial experimentation, I used just 1 date. we need to add
-	// handling for the maximum date as well.
-	var month = months[date.getMonth()];
-	console.log('month = ' + month);
+	//give a leeway of a 8 days. why 8? I vaguely remember that's the accuarcy
+	// of the 40 weeks thing.
+	var min = new Date(date.getTime()),
+		max = new Date(date.getTime());
+	min.setDate(min.getDate() - 8);
+	max.setDate(max.getDate() + 8);
 
 	//now comes to tricky part: doing bastard parsing of the returned html
 	//we cheat by creating a container for that page
 	var root = document.createElement('body');
 	root.innerHTML = html; //forgive me...
 
-	//now, filter out the headers
-	//TODO: this results in multiple possible headers - events and deaths. we
-	// only select the events. add support for deaths and births?
-	var head = [].filter.call(root.getElementsByTagName('h3'), function (h) {
-		var m = h.textContent.trim().toLowerCase();
-		return m === month;
-	})[0];
-	console.log(head);
-
-	if (!head) {
-		return [];
+	//if they're on the same month, this eases things for us, since we don't
+	// have to select events from 2 distinct months
+	if (min.getMonth() === max.getMonth()) {
+		return eventsOn(date, function (otherDay) {
+			return otherDay >= min.getDate() &&
+				otherDay <= max.getDate();
+		});
 	}
+	return (
+		eventsOn(min, function (otherDay) {
+			return otherDay >= min.getDate();
+		}),
 
-	var list = head.nextElementSibling;
-	//the head contains an immediate ul child, each li looking like one of:
-	// October 4 – Mad rabbit destroyed Switzerland
-	// <ul> <li>...</li><li>...</li> </ul>
-	//depending on whether there's only one event or many
-	var children = [].filter.call(list.children, function (li) {
-		var child = li.firstChild,
-			match = /\s(\d+)/.exec(child.data);
+		eventsOn(max, function (otherDay) {
+			return otherDay <= max.getDate();
+		})
+	);
 
-		if (!match) {
-			return false;
+	function eventsOn (date, comparer) {
+		var month = [
+			'january', 'february', 'march', 'april',
+			'may', 'june', 'july', 'august',
+			'september', 'october', 'november', 'december'
+		][date.getMonth()];
+		console.log( 'month = ' + month)
+
+		//now, filter out the headers
+		//TODO: this results in multiple possible headers - events and deaths.
+		// we only select the events. add support for deaths and births?
+		var head =
+			[].filter.call(root.getElementsByTagName('h3'), function (h) {
+				var m = h.textContent.trim().toLowerCase();
+				return m === month;
+			})[0];
+		console.log(head);
+
+		if (!head) {
+			return [];
 		}
-		var day = Number(match[1]),
-			comp = date.getDate();
 
-		return match && day === comp || (day < comp+7 && day > comp-7);
-	});
-	console.log(children);
+		var list = head.nextElementSibling;
+		//the head contains an immediate ul child, each li looking like one of:
+		// October 4 – Mad rabbit destroyed Switzerland
+		// <ul> <li>...</li><li>...</li> </ul>
+		//depending on whether there's only one event or many
+		var children = [].filter.call(list.children, function (li) {
+			var child = li.firstChild,
+				match = /\s(\d+)/.exec(child.data);
 
-	//we need to flatten out the resulting elements, and we're done!
-	return flatten(children);
+			if (!match) {
+				return false;
+			}
+			var day = Number(match[1]);
+			return match && comparer(day);
+		});
+		console.log(children);
+
+		//we need to flatten out the resulting elements, and we're done!
+		return flatten(children);
+	}
 
 	function flatten (lis) {
 		return [].reduce.call(lis, extract, []);
@@ -97,8 +119,7 @@ function filterResults (resp, date) {
 			var data = li.firstChild.data;
 			//October 4 – ...
 			data = data
-				.replace(/^\w+\s+\d+\s+/, '')
-				.replace('\u2013', '')
+				.replace(/^\w+\s+\d+\s+\u2013/, '')
 				.trim();
 			console.log(data);
 
