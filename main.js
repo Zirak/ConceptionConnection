@@ -2,7 +2,6 @@ var form = document.container,
 	results = document.getElementById('results');
 
 form.onsubmit = function (e) {
-	console.log('foo');
 	e.preventDefault();
 
 	this.submit.disabled = true;
@@ -12,15 +11,24 @@ form.onsubmit = function (e) {
 };
 
 function conceptionConnection () {
-	var date = new Date(Date.parse(form.date.value));
-	date.setDate(date.getDate() + Number(form.premature.value));
-	date.setMonth(date.getMonth() - 9);
-	console.log(date);
+	var bday = new Date(Date.parse(form.date.value)),
+		cday = calcConceptionDate(bday, Number(form.premature.value));
 
-	doRequest(date.getFullYear(), function (res) {
-		res = filterResults(res, date);
+	console.log(cday);
+	announce('You were conceived at approx. ' + cday.toLocaleDateString());
+
+	doRequest(cday.getFullYear(), function (res) {
+		res = filterResults(res, cday);
 		output(res);
 	});
+}
+
+function calcConceptionDate (bday, prematureDays) {
+	var ret = new Date(bday.getTime());
+	ret.setDate(ret.getDate() - 280); //40(weeks) * 7(days/week) = 280(days)
+	ret.setDate(ret.getDate() + prematureDays)
+
+	return ret;
 }
 
 function filterResults (resp, date) {
@@ -47,7 +55,6 @@ function filterResults (resp, date) {
 	// only select the events. add support for deaths and births?
 	var head = [].filter.call(root.getElementsByTagName('h3'), function (h) {
 		var m = h.textContent.trim().toLowerCase();
-		console.log(m);
 		return m === month;
 	})[0];
 	console.log(head);
@@ -89,7 +96,11 @@ function filterResults (resp, date) {
 		else {
 			var data = li.firstChild.data;
 			//October 4 – ...
-			data = data.replace(/^\w+\s+\d+\s+–/, '').trim();
+			data = data
+				.replace(/^\w+\s+\d+\s+/, '')
+				.replace('\u2013', '')
+				.trim();
+			console.log(data);
 
 			ret.push(data);
 		}
@@ -123,20 +134,33 @@ function doRequest (year, cb) {
 }
 
 function output (res) {
+	var events = document.createElement('ul'),
+		text;
+
 	if (res.length) {
-		res.forEach(outputLi);
+		text = 'Most likely historical events that aroused your parents:';
 	}
 	else {
-		results.appendChild(
-			document.createTextNode('Nothing historic aroused your parents'));
+		text = 'Nothing historic aroused your parents';
 	}
+	announce(text);
+
 	form.submit.disabled = false;
+	res.forEach(outputLi);
+
+	results.appendChild(events);
 
 	function outputLi (ev) {
 		var li = document.createElement('li');
 		li.textContent = ev;
-		results.appendChild(li);
+		events.appendChild(li);
 	}
+}
+
+function announce (msg) {
+	var cont = document.createElement('div');
+	cont.textContent = msg;
+	results.appendChild(cont);
 }
 
 function empty (el) {
