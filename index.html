@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Conception Connection</title>
+	<style>
+		label { display : block; }
+	</style>
+</head>
+<body>
+	<form name='container' onsubmit='return false;'>
+		<label>
+			Date of birth
+			<input type='date' name='date' required />
+		</label>
+		<label>
+			Were you born prematurely?
+			<input type='number' name='premature' value=0 /> days
+		</label>
+
+		<input type='submit' name='submit' />
+	</form>
+
+	<ul id='results'></ul>
+
+	<script src='main.js'></script>
+</body>
+</html>
