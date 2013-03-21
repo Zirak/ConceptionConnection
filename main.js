@@ -54,7 +54,8 @@ function filterResults (resp, date) {
 				otherDay <= max.getDate();
 		});
 	}
-	return (
+
+	return [].concat(
 		eventsOn(min, function (otherDay) {
 			return otherDay >= min.getDate();
 		}),
@@ -140,6 +141,7 @@ function doRequest (year, cb) {
 	//see the wikipedia API page: https://www.mediawiki.org/wiki/API
 	var url = 'http://en.wikipedia.org/w/api.php?format=json&callback=API_REQUEST_DONE&action=query&prop=extracts&indexpageids&titles=' + encodeURIComponent(year);
 
+
 	var script = document.createElement('script');
 	script.src = url;
 
@@ -151,6 +153,11 @@ function doRequest (year, cb) {
 		cb(resp);
 	};
 
+	//this was a good year for a mishmash of wikipedia formats; using it for
+	// testing
+	if (year === 1994) {
+		script.src = 'test-1994.js';
+	}
 	document.head.appendChild(script);
 }
 
