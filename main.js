@@ -13,7 +13,7 @@ form.onsubmit = function (e) {
 
 function conceptionConnection () {
 	var date = new Date(Date.parse(form.date.value));
-	date.setDate(date.getDate() - Number(form.premature.value));
+	date.setDate(date.getDate() + Number(form.premature.value));
 	date.setMonth(date.getMonth() - 9);
 	console.log(date);
 
@@ -123,7 +123,13 @@ function doRequest (year, cb) {
 }
 
 function output (res) {
-	res.forEach(outputLi);
+	if (res.length) {
+		res.forEach(outputLi);
+	}
+	else {
+		results.appendChild(
+			document.createTextNode('Nothing historic aroused your parents'));
+	}
 	form.submit.disabled = false;
 
 	function outputLi (ev) {
