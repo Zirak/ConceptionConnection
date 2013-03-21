@@ -15,7 +15,7 @@ function conceptionConnection () {
 		cday = calcConceptionDate(bday, Number(form.premature.value));
 
 	console.log(cday);
-	announce('You were conceived at approx. ' + cday.toLocaleDateString());
+	announce('You were conceived at approx. ' + cday.toDateString());
 
 	doRequest(cday.getFullYear(), function (res) {
 		res = filterResults(res, cday);
