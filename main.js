@@ -153,11 +153,6 @@ function doRequest (year, cb) {
 		cb(resp);
 	};
 
-	//this was a good year for a mishmash of wikipedia formats; using it for
-	// testing
-	if (year === 1994) {
-		script.src = 'test-1994.js';
-	}
 	document.head.appendChild(script);
 }
 
