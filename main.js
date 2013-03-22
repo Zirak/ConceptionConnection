@@ -169,9 +169,6 @@ function doRequest (year, cb) {
 		cb(resp);
 	};
 
-	if (year === 1994) {
-		script.src = 'test-1994.js';
-	}
 	document.head.appendChild(script);
 }
 
