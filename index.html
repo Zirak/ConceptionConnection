@@ -2,28 +2,30 @@
 <html>
 <head>
 	<title>Conception Connection</title>
-	<style>
-		label { display : block; }
-	</style>
 </head>
 <body>
-	<form name='container' onsubmit='return false;'>
-		<label>
-			Date of birth
-			<input type='date' name='date' placeholder='mm/dd/yyyy' required />
-		</label>
-
-		<label>
-			I was born
-			<input type='number' name='premature' value=0 /> days
+	<form name='container'>
+		<p>
+			<label>
+				Date of birth
+				<input
+					 type='date' name='date'
+					 placeholder='mm/dd/yyyy' required />
+			</label>
+		</p>
+		<p>
+			<label>
+				I was born
+				<input type='number' name='premature' value=0 /> days
+			</label>
 
 			<select name='term'>
 				<option value=-1>early</option>
 				<option value=1>late</option>
 			</select>
-		</label>
+		</p>
 
-		<input type='submit' name='submit' />
+		<input type='submit' name='implore' value='Implore' />
 	</form>
 
 	<section id='results'></section>

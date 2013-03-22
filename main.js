@@ -4,7 +4,7 @@ var form = document.container,
 form.onsubmit = function (e) {
 	e.preventDefault();
 
-	this.submit.disabled = true;
+	this.implore.disabled = true;
 	empty(results);
 
 	conceptionConnection();
@@ -37,76 +37,92 @@ function filterResults (resp, date) {
 
 	//give a leeway of a 8 days. why 8? I vaguely remember that's the accuarcy
 	// of the 40 weeks thing.
-	var min = new Date(date.getTime()),
-		max = new Date(date.getTime());
-	min.setDate(min.getDate() - 8);
-	max.setDate(max.getDate() + 8);
+	var minDate = new Date(date.getTime()),
+		maxDate = new Date(date.getTime());
+	minDate.setDate(date.getDate() - 8);
+	maxDate.setDate(date.getDate() + 8);
 
 	//now comes to tricky part: doing bastard parsing of the returned html
 	//we cheat by creating a container for that page
 	var root = document.createElement('body');
 	root.innerHTML = html; //forgive me...
 
+	var months = [
+		'january', 'february', 'march', 'april',
+		'may', 'june', 'july', 'august',
+		'september', 'october', 'november', 'december'
+	];
+	var min = {
+		month : months[minDate.getMonth()],
+		day : minDate.getDate()
+	};
+	var max = {
+		month : months[maxDate.getMonth()],
+		day : maxDate.getDate()
+	};
+	console.log(min, max);
+
 	//if they're on the same month, this eases things for us, since we don't
 	// have to select events from 2 distinct months
-	if (min.getMonth() === max.getMonth()) {
-		return eventsOn(date, function (otherDay) {
-			return otherDay >= min.getDate() &&
-				otherDay <= max.getDate();
-		});
+	var comparer;
+	if (max.month === min.month) {
+		comparer = function (otherMonth, otherDay) {
+			return otherMonth === max.month && (
+				otherDay <= max.day && otherDay >= min.day );
+		};
+	}
+	else {
+		comparer = function (otherMonth, otherDay) {
+			return (
+				//max
+				(otherMonth === max.month && otherDay <= max.day)
+				||
+				//min
+				(otherMonth === min.month && otherDay >= min.day)
+			);
+		};
 	}
 
-	return [].concat(
-		eventsOn(min, function (otherDay) {
-			return otherDay >= min.getDate();
-		}),
+	//we only look at events, not deaths/births
+	var stopNode = root.getElementsByTagName('h2')[1];
+	return getEvents(comparer);
 
-		eventsOn(max, function (otherDay) {
-			return otherDay <= max.getDate();
-		})
-	);
+	function getEvents (comparer) {
+		var matches = [];
+		(function filterEvents (root) {
+			var node = root.firstElementChild;
 
-	function eventsOn (date, comparer) {
-		var month = [
-			'january', 'february', 'march', 'april',
-			'may', 'june', 'july', 'august',
-			'september', 'october', 'november', 'december'
-		][date.getMonth()];
-		console.log( 'month = ' + month)
+			for (; node; node = node.nextElementSibling) {
+				if (node === stopNode) {
+					return;
+				}
 
-		//now, filter out the headers
-		//TODO: this results in multiple possible headers - events and deaths.
-		// we only select the events. add support for deaths and births?
-		var head =
-			[].filter.call(root.getElementsByTagName('h3'), function (h) {
-				var m = h.textContent.trim().toLowerCase();
-				return m === month;
-			})[0];
-		console.log(head);
+				var tag = node.tagName;
+				if (tag === 'UL') {
+					filterEvents(node);
+					continue;
+				}
+				else if (tag !== 'LI') {
+					continue;
+				}
 
-		if (!head) {
-			return [];
-		}
+				var parts = /(\w+)\s(\d+)/.exec(node.firstChild.data);
 
-		var list = head.nextElementSibling;
-		//the head contains an immediate ul child, each li looking like one of:
-		// October 4 – Mad rabbit destroyed Switzerland
-		// <ul> <li>...</li><li>...</li> </ul>
-		//depending on whether there's only one event or many
-		var children = [].filter.call(list.children, function (li) {
-			var child = li.firstChild,
-				match = /\s(\d+)/.exec(child.data);
+				if (!parts) {
+					continue;
+				}
+				var otherMonth = parts[1].toLowerCase(),
+					otherDay = Number(parts[2]);
 
-			if (!match) {
-				return false;
+				if (comparer(otherMonth, otherDay)) {
+					console.log(otherMonth, otherDay);
+					matches.push(node);
+				}
 			}
-			var day = Number(match[1]);
-			return match && comparer(day);
-		});
-		console.log(children);
+		})(root);
 
 		//we need to flatten out the resulting elements, and we're done!
-		return flatten(children);
+		return flatten(matches);
 	}
 
 	function flatten (lis) {
@@ -153,6 +169,9 @@ function doRequest (year, cb) {
 		cb(resp);
 	};
 
+	if (year === 1994) {
+		script.src = 'test-1994.js';
+	}
 	document.head.appendChild(script);
 }
 
@@ -168,7 +187,7 @@ function output (res) {
 	}
 	announce(text);
 
-	form.submit.disabled = false;
+	form.implore.disabled = false;
 	res.forEach(outputLi);
 
 	results.appendChild(events);
